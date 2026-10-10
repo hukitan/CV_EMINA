@@ -1,24 +1,47 @@
 name: Build PDF and release
 on: push
 
+permissions:
+  contents: write   # necesario para crear/actualizar el release
+
+env:
+  PDF_NAME: Elias_Mina_CV_Data_Analyst.pdf
+
 jobs:
   build_latex:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Find CV source
+        run: |
+          files=(CV_VEMS_*_DA.tex)
+          if [ ${#files[@]} -ne 1 ] || [ ! -f "${files[0]}" ]; then
+            echo "::error::Se esperaba exactamente un CV_VEMS_*_DA.tex, encontré: ${files[*]}"
+            exit 1
+          fi
+          echo "TEX_FILE=${files[0]}" >> "$GITHUB_ENV"
+          echo "PDF_BUILT=${files[0]%.tex}.pdf" >> "$GITHUB_ENV"
+
       - name: Compile LaTeX
         uses: xu-cheng/latex-action@v3
         with:
-          root_file: CV_VEMS_2025_DA.tex
+          root_file: ${{ env.TEX_FILE }}
+
+      - name: Rename PDF
+        run: mv "$PDF_BUILT" "$PDF_NAME"
+
       - name: Get timestamp
-        run: echo "TIMESTAMP=$(date +'%Y-%m-%d %T')" >> $GITHUB_ENV
+        run: echo "TIMESTAMP=$(date +'%Y-%m-%d %T')" >> "$GITHUB_ENV"
+
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
           name: Draft ${{ env.TIMESTAMP }}
           tag_name: CV
-          files: CV_VEMS_2025_DA.pdf
+          files: ${{ env.PDF_NAME }}
+
       - uses: actions/upload-artifact@v4
         with:
           name: PDF
-          path: CV_VEMS_2025_DA.pdf
+          path: ${{ env.PDF_NAME }}
