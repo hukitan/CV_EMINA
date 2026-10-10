@@ -37,7 +37,8 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          name: Draft ${{ env.TIMESTAMP }}
+          name: CV Final
+          body: "Última actualización: ${{ env.TIMESTAMP }} UTC"
           tag_name: CV
           files: ${{ env.PDF_NAME }}
 
